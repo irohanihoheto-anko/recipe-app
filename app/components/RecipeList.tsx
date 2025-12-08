@@ -132,7 +132,7 @@ export default function RecipeList({
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         {recipes.map((recipe, index) => (
-          <div key={recipe.id + index} className={expandedRecipeId === recipe.id ? 'md:col-span-3' : ''}>
+          <div key={recipe.id + index} className={expandedRecipeId === recipe.id ? 'col-span-2 md:col-span-3' : ''}>
             <div
               onClick={() => handleRecipeCardClick(recipe)}
               className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
