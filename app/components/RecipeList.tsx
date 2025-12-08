@@ -130,7 +130,7 @@ export default function RecipeList({
         <p className="text-gray-600">{recipes.length}件のレシピが見つかりました</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
         {recipes.map((recipe, index) => (
           <div key={recipe.id + index} className={expandedRecipeId === recipe.id ? 'md:col-span-3' : ''}>
             <div
