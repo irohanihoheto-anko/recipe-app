@@ -1,0 +1,46 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ユーザーモデル（簡易版）
+model User {
+  id            String         @id @default(uuid())
+  email         String?        @unique
+  name          String?
+  sessionId     String         @unique // ブラウザのセッションID（認証なし）
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  savedRecipes  SavedRecipe[]
+}
+
+// 保存されたレシピ
+model SavedRecipe {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // レシピ情報（外部APIから取得したデータを保存）
+  recipeId      String   // 元のレシピID（edamam/rakuten）
+  title         String
+  image         String
+  url           String
+  source        String   // 'rakuten' | 'edamam'
+  calories      Int?
+  time          Int?
+  servings      Int?
+  
+  // JSON形式で保存
+  ingredients   String   @db.Text // JSON配列
+  
+  createdAt     DateTime @default(now())
+  
+  @@unique([userId, recipeId]) // 同じレシピを重複保存しない
+}
