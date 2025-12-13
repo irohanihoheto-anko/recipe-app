@@ -7,14 +7,12 @@ import RecipeDetail from './RecipeDetail';
 interface RecipeListProps {
   recipes: UnifiedRecipe[];
   selectedCategory: string;
-  searchQuery: string;
   onRecipeClick: (recipe: UnifiedRecipe) => Promise<ProcessedRecipe | null>;
 }
 
 export default function RecipeList({
   recipes,
   selectedCategory,
-  searchQuery,
   onRecipeClick,
 }: RecipeListProps) {
   const [savingRecipes, setSavingRecipes] = useState<Set<string>>(new Set());
@@ -121,11 +119,7 @@ export default function RecipeList({
     <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-12">
       <div className="mb-6">
         <h2 className="text-3xl font-bold text-gray-800 mb-2">
-          {selectedCategory
-            ? `${selectedCategory}のレシピ`
-            : searchQuery
-            ? `「${searchQuery}」の検索結果`
-            : 'レシピ一覧'}
+          {selectedCategory ? `${selectedCategory}のレシピ` : 'レシピ一覧'}
         </h2>
         <p className="text-gray-600">{recipes.length}件のレシピが見つかりました</p>
       </div>
