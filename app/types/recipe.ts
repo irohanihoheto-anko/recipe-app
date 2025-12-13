@@ -1,10 +1,11 @@
-// 統一レシピ型（楽天とEdamamの両方に対応）
+// 統一レシピ型（楽天、Edamam、TheMealDBに対応）
 export interface UnifiedRecipe {
   id: string;
   title: string;
+  translatedTitle?: string; // TheMealDB用の翻訳されたタイトル
   image: string;
   url: string;
-  source: 'rakuten' | 'edamam';
+  source: 'rakuten' | 'edamam' | 'themealdb';
   // Edamam用
   calories?: number;
   time?: number;

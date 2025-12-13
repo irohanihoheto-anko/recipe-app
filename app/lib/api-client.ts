@@ -1,5 +1,6 @@
 import type { EdamamSearchResponse, EdamamSearchFilters } from '../types/edamam';
 import type { RakutenSearchResponse } from '../types/rakuten';
+import type { TheMealDBSearchResponse, TheMealDBRecipe } from '../types/themealdb';
 import type { UnifiedRecipe, RecipeDataForAPI, ProcessedRecipe } from '../types/recipe';
 
 /**
@@ -102,6 +103,77 @@ export async function searchRakutenRecipesByKeyword(keyword: string): Promise<Un
 }
 
 /**
+ * TheMealDB APIからレシピを検索
+ */
+export async function searchTheMealDBRecipes(query: string): Promise<UnifiedRecipe[]> {
+  try {
+    const response = await fetch(`/api/recipes/themealdb?q=${encodeURIComponent(query)}`);
+    if (!response.ok) {
+      throw new Error(`TheMealDB API error: ${response.status}`);
+    }
+
+    const data: TheMealDBSearchResponse = await response.json();
+
+    if (!data.meals || data.meals.length === 0) {
+      console.warn('TheMealDB API returned no results.');
+      return [];
+    }
+
+    // 並列で翻訳を実行
+    const translationPromises = data.meals.map(meal => translateText(meal.strMeal));
+    const translations = await Promise.all(translationPromises);
+
+    return data.meals.map((meal, index) => {
+      // 材料リストを作成
+      const ingredients: string[] = [];
+      for (let i = 1; i <= 20; i++) {
+        const ingredient = meal[`strIngredient${i}` as keyof TheMealDBRecipe];
+        const measure = meal[`strMeasure${i}` as keyof TheMealDBRecipe];
+        if (ingredient && ingredient.trim()) {
+          ingredients.push(`${measure || ''} ${ingredient}`.trim());
+        }
+      }
+
+      return {
+        id: meal.idMeal,
+        title: meal.strMeal,
+        translatedTitle: translations[index],
+        image: meal.strMealThumb,
+        url: meal.strSource || `https://www.themealdb.com/meal/${meal.idMeal}`,
+        source: 'themealdb' as const,
+        ingredients,
+      };
+    });
+  } catch (error) {
+    console.error('TheMealDB search error:', error);
+    return [];
+  }
+}
+
+/**
+ * テキストを日本語に翻訳
+ */
+export async function translateText(text: string): Promise<string> {
+  try {
+    const response = await fetch('/api/translate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Translation API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.translatedText || text;
+  } catch (error) {
+    console.error('Translation error:', error);
+    return text; // 翻訳失敗時は元のテキストを返す
+  }
+}
+
+/**
  * OpenAI APIでレシピを処理
  */
 export async function processRecipeWithAI(recipe: UnifiedRecipe): Promise<ProcessedRecipe | null> {
@@ -113,6 +185,12 @@ export async function processRecipeWithAI(recipe: UnifiedRecipe): Promise<Proces
         recipeTitle: recipe.title,
         recipeMaterial: recipe.ingredients || [],
         recipeIndication: `Cooking time: ${recipe.time || 0} minutes. Serves ${recipe.servings || 0}.`,
+      };
+    } else if (recipe.source === 'themealdb') {
+      recipeData = {
+        recipeTitle: recipe.translatedTitle || recipe.title,
+        recipeMaterial: recipe.ingredients || [],
+        recipeIndication: '',
       };
     } else {
       recipeData = {
@@ -133,7 +211,7 @@ export async function processRecipeWithAI(recipe: UnifiedRecipe): Promise<Proces
     }
 
     const processedRecipe: ProcessedRecipe = await response.json();
-    
+
     // 元のレシピ情報を追加
     return {
       ...processedRecipe,

@@ -138,34 +138,34 @@ export default function RecipeList({
               className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
             >
               <div className="flex flex-col">
-                <div className="relative overflow-hidden h-64 w-full">
+                <div className="relative overflow-hidden aspect-square w-full">
                   <Image
                     src={recipe.image}
                     alt={recipe.title}
                     width={400}
-                    height={300}
+                    height={400}
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-                  <div className="absolute top-2 right-2">
+                  <div className="absolute top-1 right-1 md:top-2 md:right-2">
                     {/* 保存ボタン */}
                     <button
                       onClick={(e) => handleSaveRecipe(recipe, e)}
                       disabled={savingRecipes.has(recipe.id)}
-                      className="bg-white hover:bg-gray-50 text-gray-700 p-2 rounded-lg shadow-md transition disabled:opacity-50"
+                      className="bg-white hover:bg-gray-50 text-gray-700 p-1 md:p-2 rounded-lg shadow-md transition disabled:opacity-50"
                       title="レシピを保存"
                     >
-                      <span className="text-xl">{savingRecipes.has(recipe.id) ? '⏳' : '💾'}</span>
+                      <span className="text-base md:text-xl">{savingRecipes.has(recipe.id) ? '⏳' : '💾'}</span>
                     </button>
                   </div>
                 </div>
-                <div className="p-4">
-                  <h3 className="font-bold text-gray-800 group-hover:text-orange-600 transition mb-2 text-base line-clamp-2">
-                    {recipe.title}
+                <div className="p-2 md:p-4">
+                  <h3 className="font-bold text-gray-800 group-hover:text-orange-600 transition mb-1 md:mb-2 text-xs md:text-base line-clamp-2">
+                    {recipe.translatedTitle || recipe.title}
                   </h3>
                   {recipe.calories && (
-                    <div className="flex items-center gap-3 text-gray-600 text-sm">
+                    <div className="flex items-center gap-2 md:gap-3 text-gray-600 text-xs md:text-sm">
                       <span>🔥 {recipe.calories}kcal</span>
                       {recipe.time && recipe.time > 0 && <span>⏱️ {recipe.time}分</span>}
                     </div>

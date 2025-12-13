@@ -6,6 +6,7 @@ import {
   searchEdamamRecipes,
   searchRakutenRecipesByCategory,
   searchRakutenRecipesByKeyword,
+  searchTheMealDBRecipes,
   processRecipeWithAI,
 } from '../lib/api-client';
 
@@ -18,7 +19,7 @@ export default function RecipeSearch() {
   const [selectedCategory, setSelectedCategory] = useState('');
   const [recipes, setRecipes] = useState<UnifiedRecipe[]>([]);
   const [loading, setLoading] = useState(false);
-  const [searchSource, setSearchSource] = useState<'rakuten' | 'edamam' | 'both'>('both');
+  const [searchSource, setSearchSource] = useState<'rakuten' | 'edamam' | 'themealdb' | 'both'>('both');
   
   // レシピキャッシュ: recipeId -> ProcessedRecipe
   const [recipeCache, setRecipeCache] = useState<Map<string, ProcessedRecipe>>(new Map());
@@ -33,7 +34,7 @@ export default function RecipeSearch() {
     setLoading(false);
   };
 
-  // キーワード検索（EdamamとRakutenの両方）
+  // キーワード検索（全API対応）
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
 
@@ -42,7 +43,17 @@ export default function RecipeSearch() {
 
     const results: UnifiedRecipe[] = [];
 
-    // Edamam APIで検索
+    // 各APIで検索
+    if (searchSource === 'rakuten' || searchSource === 'both') {
+      const rakutenResults = await searchRakutenRecipesByKeyword(searchQuery);
+      results.push(...rakutenResults);
+    }
+
+    if (searchSource === 'themealdb' || searchSource === 'both') {
+      const mealDBResults = await searchTheMealDBRecipes(searchQuery);
+      results.push(...mealDBResults);
+    }
+
     if (searchSource === 'edamam' || searchSource === 'both') {
       const edamamResults = await searchEdamamRecipes(searchQuery, {
         from: 0,
@@ -51,14 +62,26 @@ export default function RecipeSearch() {
       results.push(...edamamResults);
     }
 
-    // 楽天レシピでも検索
-    if (searchSource === 'rakuten' || searchSource === 'both') {
-      const rakutenResults = await searchRakutenRecipesByKeyword(searchQuery);
-      results.push(...rakutenResults);
+    // 選択されたソースのレシピを上位に表示
+    const sortedResults = sortRecipesBySource(results, searchSource);
+    setRecipes(sortedResults);
+    setLoading(false);
+  };
+
+  // レシピをソースに基づいてソート
+  const sortRecipesBySource = (
+    recipes: UnifiedRecipe[],
+    source: 'rakuten' | 'edamam' | 'themealdb' | 'both'
+  ): UnifiedRecipe[] => {
+    if (source === 'both') {
+      return recipes;
     }
 
-    setRecipes(results);
-    setLoading(false);
+    // 選択されたソースのレシピを先に、それ以外を後に
+    return [
+      ...recipes.filter(r => r.source === source),
+      ...recipes.filter(r => r.source !== source),
+    ];
   };
 
   // レシピを処理（キャッシュを確認してから処理）
