@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Image from 'next/image';
 import type { ProcessedRecipe } from '../types/recipe';
 import { getOrCreateSessionId } from '../lib/session';
 
@@ -122,31 +123,44 @@ export default function RecipeDetail({ recipe, onBack, hideButtons = false }: Re
       )}
 
       <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-        <div className="bg-linear-to-r from-orange-500 to-red-600 text-white p-8">
+        {/* 画像セクション */}
+        {recipe.image && (
+          <div className="relative w-full h-64 md:h-80 bg-gray-100">
+            <Image
+              src={recipe.image}
+              alt={recipe.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+            />
+          </div>
+        )}
+
+        <div className="bg-linear-to-r from-orange-500 to-red-600 text-white p-6 md:p-8">
           <div className="flex justify-between items-start">
             <div>
-              <h2 className="text-4xl font-bold mb-2">{recipe.title}</h2>
-              <div className="flex items-center gap-6 text-orange-100">
+              <h2 className="text-2xl md:text-4xl font-bold mb-2">{recipe.title}</h2>
+              <div className="flex items-center gap-4 md:gap-6 text-orange-100 text-sm md:text-base">
                 <span className="flex items-center gap-2">
-                  <span className="text-2xl">⏱️</span>
+                  <span className="text-xl md:text-2xl">⏱️</span>
                   <span className="font-semibold">{recipe.totalTime}分</span>
                 </span>
                 <span className="flex items-center gap-2">
-                  <span className="text-2xl">💰</span>
+                  <span className="text-xl md:text-2xl">💰</span>
                   <span className="font-semibold">約{recipe.totalCost}円</span>
                 </span>
               </div>
             </div>
             <button
               onClick={() => setIsExpanded(false)}
-              className="text-white hover:text-orange-100 transition text-2xl"
+              className="text-white hover:text-orange-100 transition text-xl md:text-2xl"
             >
               ▲
             </button>
           </div>
         </div>
 
-        <div className="p-8">
+        <div className="p-4 md:p-8">
           {/* 栄養情報 */}
           <div className="mb-8">
             <h3 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-2">
