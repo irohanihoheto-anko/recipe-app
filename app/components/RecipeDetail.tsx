@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import type { ProcessedRecipe } from '../types/recipe';
 import { getOrCreateSessionId } from '../lib/session';
@@ -9,19 +9,29 @@ interface RecipeDetailProps {
   hideButtons?: boolean;
 }
 
+/**
+ * レシピ詳細表示コンポーネント
+ * 栄養情報、材料、調理手順を表示し、保存機能を提供
+ */
 export default function RecipeDetail({ recipe, onBack, hideButtons = false }: RecipeDetailProps) {
+  // State管理
   const [saving, setSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true);
 
-  const handleSave = async () => {
+  /**
+   * レシピ保存処理
+   * ProcessedRecipeをUnifiedRecipe形式に変換してAPIに送信
+   */
+  const handleSave = useCallback(async () => {
     if (saving || isSaved) return;
     
     setSaving(true);
-    
+
     try {
       const sessionId = getOrCreateSessionId();
-      
+
+      // ProcessedRecipeをUnifiedRecipe形式に変換
       const unifiedRecipe = {
         id: recipe.originalRecipeId || `processed-${Date.now()}`,
         title: recipe.title,
@@ -31,52 +41,45 @@ export default function RecipeDetail({ recipe, onBack, hideButtons = false }: Re
         calories: recipe.totalCalories,
         time: recipe.totalTime,
       };
-      
-      // Supabaseからトークンを取得
+
+      // Supabase認証トークンを取得
       const { supabase } = await import('../lib/supabase');
       const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      
+
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
       }
-      
+
+      // レシピ保存APIを呼び出し
       const response = await fetch('/api/saved-recipes', {
         method: 'POST',
         headers,
         body: JSON.stringify({ sessionId, recipe: unifiedRecipe }),
       });
-      
+
+      // レスポンス処理
       if (response.ok) {
         setIsSaved(true);
-        if (typeof window !== 'undefined') {
-          window.alert('⭐ レシピを保存しました！');
-        }
+        window.alert('⭐ レシピを保存しました！');
       } else if (response.status === 409) {
         setIsSaved(true);
-        if (typeof window !== 'undefined') {
-          window.alert('ℹ️ このレシピはすでに保存されています');
-        }
+        window.alert('ℹ️ このレシピはすでに保存されています');
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorData = await response.json().catch(() => ({ error: '不明なエラー' }));
         console.error('Save failed:', errorData);
-        if (typeof window !== 'undefined') {
-          window.alert(`保存に失敗しました: ${errorData.error || '不明なエラー'}`);
-        }
+        window.alert(`保存に失敗しました: ${errorData.error}`);
       }
     } catch (error) {
       console.error('Save error:', error);
-      if (typeof window !== 'undefined') {
-        window.alert('保存に失敗しました。ネットワーク接続を確認してください。');
-      }
+      window.alert('保存に失敗しました。ネットワーク接続を確認してください。');
     } finally {
       setSaving(false);
     }
-  };
+  }, [saving, isSaved, recipe]);
 
   // 折りたたみ時の簡易表示
   if (!isExpanded) {
