@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import type { UnifiedRecipe, ProcessedRecipe } from '../types/recipe';
 import {
   searchRakutenRecipesByCategory,
@@ -11,45 +11,62 @@ import SearchHeader from './SearchHeader';
 import CategoryGrid from './CategoryGrid';
 import RecipeList from './RecipeList';
 
+/**
+ * レシピ検索メインコンポーネント
+ * カテゴリ選択、レシピ一覧表示、レシピ詳細表示を管理
+ */
 export default function RecipeSearch() {
+  // State管理
   const [selectedCategory, setSelectedCategory] = useState('');
   const [recipes, setRecipes] = useState<UnifiedRecipe[]>([]);
   const [loading, setLoading] = useState(false);
-
-  // レシピキャッシュ: recipeId -> ProcessedRecipe
   const [recipeCache, setRecipeCache] = useState<Map<string, ProcessedRecipe>>(new Map());
 
-  // カテゴリでレシピを検索（楽天のみ）
-  const handleCategoryClick = async (categoryName: string) => {
+  /**
+   * カテゴリクリック時の処理
+   * 選択されたカテゴリの楽天レシピを検索して表示
+   */
+  const handleCategoryClick = useCallback(async (categoryName: string) => {
     setSelectedCategory(categoryName);
     setLoading(true);
 
-    const results = await searchRakutenRecipesByCategory(categoryName);
-    setRecipes(results);
-    setLoading(false);
-  };
+    try {
+      const results = await searchRakutenRecipesByCategory(categoryName);
+      setRecipes(results);
+    } catch (error) {
+      console.error('Failed to fetch recipes:', error);
+      setRecipes([]);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  // レシピを処理（キャッシュを確認してから処理）
-  const handleRecipeClick = async (recipe: UnifiedRecipe): Promise<ProcessedRecipe | null> => {
-    console.log('Processing recipe:', recipe.title);
-    
-    // キャッシュを確認
-    if (recipeCache.has(recipe.id)) {
-      console.log('Using cached recipe');
-      return recipeCache.get(recipe.id)!;
+  /**
+   * レシピクリック時の処理
+   * キャッシュをチェックし、なければAI処理を実行してキャッシュに保存
+   */
+  const handleRecipeClick = useCallback(async (recipe: UnifiedRecipe): Promise<ProcessedRecipe | null> => {
+    // キャッシュから取得を試みる
+    const cached = recipeCache.get(recipe.id);
+    if (cached) {
+      return cached;
     }
-    
-    // キャッシュにない場合は処理
-    const processed = await processRecipeWithAI(recipe);
-    console.log('Processed recipe:', processed);
-    
-    // キャッシュに保存
-    if (processed) {
-      setRecipeCache(new Map(recipeCache.set(recipe.id, processed)));
+
+    // AI処理を実行
+    try {
+      const processed = await processRecipeWithAI(recipe);
+
+      // キャッシュに保存
+      if (processed) {
+        setRecipeCache(prev => new Map(prev).set(recipe.id, processed));
+      }
+
+      return processed;
+    } catch (error) {
+      console.error('Failed to process recipe:', error);
+      return null;
     }
-    
-    return processed;
-  };
+  }, [recipeCache]);
 
   return (
     <div className="min-h-screen bg-linear-to-br from-orange-50 via-white to-green-50">

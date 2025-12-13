@@ -4,7 +4,10 @@ import type { TheMealDBSearchResponse, TheMealDBRecipe } from '../types/themeald
 import type { UnifiedRecipe, RecipeDataForAPI, ProcessedRecipe } from '../types/recipe';
 
 /**
- * Edamam APIからレシピを検索（フィルター対応）
+ * Edamam APIからレシピを検索
+ * @param query - 検索キーワード
+ * @param filters - フィルター条件（食事タイプ、健康条件など）
+ * @returns UnifiedRecipe配列
  */
 export async function searchEdamamRecipes(
   query: string,
@@ -56,6 +59,8 @@ export async function searchEdamamRecipes(
 
 /**
  * 楽天レシピAPIからカテゴリ別レシピを検索
+ * @param category - カテゴリ名（例: "人気メニュー"、"定番の肉料理"）
+ * @returns UnifiedRecipe配列
  */
 export async function searchRakutenRecipesByCategory(category: string): Promise<UnifiedRecipe[]> {
   try {
@@ -88,7 +93,10 @@ export async function searchRakutenRecipesByCategory(category: string): Promise<
 }
 
 /**
- * 楽天レシピをキーワードで検索（人気メニューから絞り込み）
+ * 楽天レシピをキーワードで検索
+ * 人気メニューカテゴリから絞り込み検索を実行
+ * @param keyword - 検索キーワード
+ * @returns UnifiedRecipe配列
  */
 export async function searchRakutenRecipesByKeyword(keyword: string): Promise<UnifiedRecipe[]> {
   try {
@@ -104,6 +112,9 @@ export async function searchRakutenRecipesByKeyword(keyword: string): Promise<Un
 
 /**
  * TheMealDB APIからレシピを検索
+ * レシピ名を日本語に翻訳して返す
+ * @param query - 検索キーワード
+ * @returns UnifiedRecipe配列（translatedTitleに日本語訳を含む）
  */
 export async function searchTheMealDBRecipes(query: string): Promise<UnifiedRecipe[]> {
   try {
@@ -152,6 +163,9 @@ export async function searchTheMealDBRecipes(query: string): Promise<UnifiedReci
 
 /**
  * テキストを日本語に翻訳
+ * OpenAI APIを使用してテキストを日本語に翻訳
+ * @param text - 翻訳するテキスト
+ * @returns 翻訳されたテキスト（失敗時は元のテキスト）
  */
 export async function translateText(text: string): Promise<string> {
   try {
@@ -175,6 +189,9 @@ export async function translateText(text: string): Promise<string> {
 
 /**
  * OpenAI APIでレシピを処理
+ * レシピ情報をAIで解析し、材料費・栄養情報・調理手順を生成
+ * @param recipe - 処理するレシピ（UnifiedRecipe形式）
+ * @returns 処理済みレシピ（材料費、栄養情報、手順を含む）
  */
 export async function processRecipeWithAI(recipe: UnifiedRecipe): Promise<ProcessedRecipe | null> {
   try {

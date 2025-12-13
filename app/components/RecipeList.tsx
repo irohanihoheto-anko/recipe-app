@@ -1,7 +1,7 @@
 import Image from 'next/image';
+import { useState, useCallback } from 'react';
 import type { UnifiedRecipe, ProcessedRecipe } from '../types/recipe';
 import { getOrCreateSessionId } from '../lib/session';
-import { useState } from 'react';
 import RecipeDetail from './RecipeDetail';
 
 interface RecipeListProps {
@@ -10,110 +10,114 @@ interface RecipeListProps {
   onRecipeClick: (recipe: UnifiedRecipe) => Promise<ProcessedRecipe | null>;
 }
 
+/**
+ * レシピ一覧表示コンポーネント
+ * レシピカードの表示、保存、詳細表示を管理
+ */
 export default function RecipeList({
   recipes,
   selectedCategory,
   onRecipeClick,
 }: RecipeListProps) {
+  // State管理
   const [savingRecipes, setSavingRecipes] = useState<Set<string>>(new Set());
   const [expandedRecipeId, setExpandedRecipeId] = useState<string | null>(null);
   const [loadingRecipeId, setLoadingRecipeId] = useState<string | null>(null);
   const [processedRecipe, setProcessedRecipe] = useState<ProcessedRecipe | null>(null);
 
+  // レシピが空の場合は何も表示しない
   if (recipes.length === 0) {
     return null;
   }
 
-  const handleSaveRecipe = async (recipe: UnifiedRecipe, e: React.MouseEvent) => {
+  /**
+   * レシピ保存処理
+   * Supabase認証トークンを取得してAPIに送信
+   */
+  const handleSaveRecipe = useCallback(async (recipe: UnifiedRecipe, e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
+    // 既に保存処理中の場合は何もしない
     if (savingRecipes.has(recipe.id)) return;
-    
-    setSavingRecipes((prev) => new Set(prev).add(recipe.id));
-    
+
+    setSavingRecipes(prev => new Set(prev).add(recipe.id));
+
     try {
       const sessionId = getOrCreateSessionId();
-      
-      // Supabaseからトークンを取得
+
+      // Supabase認証トークンを取得
       const { supabase } = await import('../lib/supabase');
       const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
-      
+
       const headers: HeadersInit = {
         'Content-Type': 'application/json',
       };
-      
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
+
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
       }
-      
+
+      // レシピ保存APIを呼び出し
       const response = await fetch('/api/saved-recipes', {
         method: 'POST',
         headers,
         body: JSON.stringify({ sessionId, recipe }),
       });
-      
+
+      // レスポンス処理
       if (response.ok) {
-        if (typeof window !== 'undefined') {
-          window.alert('⭐ レシピを保存しました！');
-        }
+        window.alert('⭐ レシピを保存しました！');
       } else if (response.status === 409) {
-        if (typeof window !== 'undefined') {
-          window.alert('ℹ️ このレシピはすでに保存されています');
-        }
+        window.alert('ℹ️ このレシピはすでに保存されています');
       } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorData = await response.json().catch(() => ({ error: '不明なエラー' }));
         console.error('Save failed:', errorData);
-        if (typeof window !== 'undefined') {
-          window.alert(`保存に失敗しました: ${errorData.error || '不明なエラー'}`);
-        }
+        window.alert(`保存に失敗しました: ${errorData.error}`);
       }
     } catch (error) {
       console.error('Save error:', error);
-      if (typeof window !== 'undefined') {
-        window.alert('保存に失敗しました。ネットワーク接続を確認してください。');
-      }
+      window.alert('保存に失敗しました。ネットワーク接続を確認してください。');
     } finally {
-      setSavingRecipes((prev) => {
+      setSavingRecipes(prev => {
         const next = new Set(prev);
         next.delete(recipe.id);
         return next;
       });
     }
-  };
+  }, [savingRecipes]);
 
-  const handleRecipeCardClick = async (recipe: UnifiedRecipe) => {
-    console.log('=== Recipe Card Clicked ===' );
-    console.log('Recipe:', recipe);
-    
-    // すでに展開されているレシピをクリックした場合は閉じる
+  /**
+   * レシピカードクリック処理
+   * レシピ詳細を展開/折りたたみ、AI処理を実行
+   */
+  const handleRecipeCardClick = useCallback(async (recipe: UnifiedRecipe) => {
+    // 既に展開中のレシピをクリックした場合は閉じる
     if (expandedRecipeId === recipe.id) {
       setExpandedRecipeId(null);
       setProcessedRecipe(null);
       return;
     }
 
-    // 新しいレシピをクリックした場合
+    // 新しいレシピを展開
     setExpandedRecipeId(recipe.id);
     setLoadingRecipeId(recipe.id);
     setProcessedRecipe(null);
 
-    console.log('Calling onRecipeClick...');
-    
-    // AI処理を実行
-    const processed = await onRecipeClick(recipe);
-    
-    console.log('Received processed recipe:', processed);
-    
-    if (processed) {
-      setProcessedRecipe(processed);
-      console.log('Set processed recipe to state');
-    } else {
-      console.error('Processed recipe is null!');
+    try {
+      // AI処理を実行
+      const processed = await onRecipeClick(recipe);
+
+      if (processed) {
+        setProcessedRecipe(processed);
+      } else {
+        console.error('Failed to process recipe');
+      }
+    } catch (error) {
+      console.error('Error processing recipe:', error);
+    } finally {
+      setLoadingRecipeId(null);
     }
-    
-    setLoadingRecipeId(null);
-  };
+  }, [expandedRecipeId, onRecipeClick]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-12">
