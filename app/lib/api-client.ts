@@ -1,6 +1,6 @@
 import type { EdamamSearchResponse, EdamamSearchFilters } from '../types/edamam';
 import type { RakutenSearchResponse } from '../types/rakuten';
-import type { TheMealDBSearchResponse, TheMealDBRecipe } from '../types/themealdb';
+import type { TheMealDBSearchResponse, TheMealDBMeal } from '../types/themealdb';
 import type { UnifiedRecipe, RecipeDataForAPI, ProcessedRecipe } from '../types/recipe';
 
 /**
@@ -138,8 +138,8 @@ export async function searchTheMealDBRecipes(query: string): Promise<UnifiedReci
       // 材料リストを作成
       const ingredients: string[] = [];
       for (let i = 1; i <= 20; i++) {
-        const ingredient = meal[`strIngredient${i}` as keyof TheMealDBRecipe];
-        const measure = meal[`strMeasure${i}` as keyof TheMealDBRecipe];
+        const ingredient = meal[`strIngredient${i}` as keyof TheMealDBMeal];
+        const measure = meal[`strMeasure${i}` as keyof TheMealDBMeal];
         if (ingredient && ingredient.trim()) {
           ingredients.push(`${measure || ''} ${ingredient}`.trim());
         }

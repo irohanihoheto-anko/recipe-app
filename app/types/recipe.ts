@@ -5,12 +5,21 @@ export interface UnifiedRecipe {
   translatedTitle?: string; // TheMealDB用の翻訳されたタイトル
   image: string;
   url: string;
-  source: 'rakuten' | 'edamam' | 'themealdb';
+  source: 'rakuten' | 'edamam' | 'themealdb' | 'spoonacular';
   // Edamam用
   calories?: number;
   time?: number;
   servings?: number;
   ingredients?: string[];
+  // 拡張フィールド
+  category?: string;
+  cuisine?: string;
+  instructions?: string;
+  tags?: string[];
+  videoUrl?: string;
+  healthScore?: number;
+  pricePerServing?: number;
+  analyzedInstructions?: any[];
   // 楽天用
   recipeMaterial?: string[];
   recipeIndication?: string;

@@ -6,6 +6,7 @@ export interface TheMealDBMeal {
   strInstructions: string;
   strMealThumb: string;
   strYoutube?: string;
+  strTags?: string;
   strSource?: string;
   strIngredient1?: string;
   strIngredient2?: string;

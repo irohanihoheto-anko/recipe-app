@@ -134,9 +134,10 @@ export default function MyPage() {
       id: targetId,
       title: recipe.title,
       image: recipe.image,
+      url: '',
+      source: 'rakuten',
       calories: recipe.calories,
       time: recipe.time,
-      description: '',
       ingredients: []
     };
 
