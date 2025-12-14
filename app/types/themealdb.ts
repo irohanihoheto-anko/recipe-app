@@ -1,4 +1,4 @@
-export interface TheMealDBRecipe {
+export interface TheMealDBMeal {
   idMeal: string;
   strMeal: string;
   strCategory: string;
@@ -50,5 +50,5 @@ export interface TheMealDBRecipe {
 }
 
 export interface TheMealDBSearchResponse {
-  meals: TheMealDBRecipe[] | null;
+  meals: TheMealDBMeal[] | null;
 }
