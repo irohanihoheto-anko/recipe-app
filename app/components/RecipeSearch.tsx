@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { UnifiedRecipe, ProcessedRecipe } from '../types/recipe';
 import {
   searchRakutenRecipesByCategory,
@@ -22,6 +22,9 @@ export default function RecipeSearch() {
   const [loading, setLoading] = useState(false);
   const [recipeCache, setRecipeCache] = useState<Map<string, ProcessedRecipe>>(new Map());
 
+  // レシピリストへのRef（スクロール用）
+  const recipeListRef = useRef<HTMLDivElement>(null);
+
   /**
    * カテゴリクリック時の処理
    * 選択されたカテゴリの楽天レシピを検索して表示
@@ -33,6 +36,11 @@ export default function RecipeSearch() {
     try {
       const results = await searchRakutenRecipesByCategory(categoryName);
       setRecipes(results);
+
+      // レシピ一覧へスクロール
+      setTimeout(() => {
+        recipeListRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     } catch (error) {
       console.error('Failed to fetch recipes:', error);
       setRecipes([]);
@@ -69,7 +77,7 @@ export default function RecipeSearch() {
   }, [recipeCache]);
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-orange-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 via-white to-emerald-50">
       {/* ヘッダー */}
       <SearchHeader />
 
@@ -88,11 +96,13 @@ export default function RecipeSearch() {
       )}
 
       {/* レシピ一覧（展開型） */}
-      <RecipeList
-        recipes={recipes}
-        selectedCategory={selectedCategory}
-        onRecipeClick={handleRecipeClick}
-      />
+      <div ref={recipeListRef}>
+        <RecipeList
+          recipes={recipes}
+          selectedCategory={selectedCategory}
+          onRecipeClick={handleRecipeClick}
+        />
+      </div>
     </div>
   );
 }

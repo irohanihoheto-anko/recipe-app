@@ -77,6 +77,27 @@ export default function RecipeAssistant({ recipe }: RecipeAssistantProps) {
         }
     };
 
+    // 音声入力を停止
+    const stopListening = () => {
+        if (recognitionRef.current && isListening) {
+            try {
+                recognitionRef.current.stop();
+                setIsListening(false);
+            } catch (error) {
+                console.error('Speech recognition stop error:', error);
+            }
+        }
+    };
+
+    // マイクボタンのトグル
+    const toggleListening = () => {
+        if (isListening) {
+            stopListening();
+        } else {
+            startListening();
+        }
+    };
+
     // ユーザーのメッセージを処理
     const handleUserMessage = async (text: string) => {
         const newMessages = [...messages, { role: 'user' as const, content: text }];
@@ -139,7 +160,7 @@ export default function RecipeAssistant({ recipe }: RecipeAssistantProps) {
 
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = 'ja-JP';
-            utterance.rate = 1.3; // 1.3倍速
+            utterance.rate = 1.2; // 1.2倍速
             utterance.pitch = 1.0;
 
             utterance.onstart = () => setIsPlaying(true);
@@ -198,21 +219,21 @@ export default function RecipeAssistant({ recipe }: RecipeAssistantProps) {
                     {/* コントロールエリア (コンパクト) */}
                     <div className="p-2 bg-white border-t border-gray-100 flex items-center justify-between gap-4">
                         <p className="text-xs text-gray-400 pl-2">
-                            {isListening ? '聞き取り中...' : isProcessing ? '考え中...' : isPlaying ? '再生中...' : '会話できます'}
+                            {isListening ? '🔴 録音中... タップで送信' : isProcessing ? '考え中...' : isPlaying ? '再生中...' : '🎙️ タップして話す'}
                         </p>
 
                         <button
-                            onClick={startListening}
-                            disabled={isListening || isProcessing || isPlaying}
-                            className={`w-12 h-12 rounded-full flex items-center justify-center transition-all shadow-md ${isListening
-                                ? 'bg-red-500 animate-pulse'
+                            onClick={toggleListening}
+                            disabled={isProcessing || isPlaying}
+                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all shadow-md ${isListening
+                                ? 'bg-red-500 animate-pulse ring-4 ring-red-300'
                                 : isProcessing || isPlaying
                                     ? 'bg-gray-300 cursor-not-allowed'
                                     : 'bg-orange-500 hover:bg-orange-600'
                                 }`}
                         >
-                            <span className="text-xl text-white">
-                                {isListening ? '🎤' : isProcessing ? '💭' : isPlaying ? '🔊' : '🎙️'}
+                            <span className="text-2xl text-white">
+                                {isListening ? '⏹️' : isProcessing ? '💭' : isPlaying ? '🔊' : '🎙️'}
                             </span>
                         </button>
                     </div>

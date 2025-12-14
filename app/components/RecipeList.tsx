@@ -146,10 +146,10 @@ export default function RecipeList({
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-12">
       <div className="mb-6">
-        <h2 className="text-3xl font-bold text-gray-800 mb-2">
+        <h2 className="text-3xl font-bold text-stone-700 mb-2">
           {selectedCategory ? `${selectedCategory}のレシピ` : 'レシピ一覧'}
         </h2>
-        <p className="text-gray-600">{recipes.length}件のレシピが見つかりました</p>
+        <p className="text-stone-500">{recipes.length}件のレシピが見つかりました</p>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
@@ -159,7 +159,7 @@ export default function RecipeList({
             {expandedIndex !== index && (
               <div
                 onClick={() => handleRecipeCardClick(recipe, index)}
-                className="group cursor-pointer bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-1"
+                className="group cursor-pointer bg-white/90 backdrop-blur-sm rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-stone-200/50"
               >
                 <div className="flex flex-col">
                   <div className="relative overflow-hidden aspect-square w-full">
@@ -177,7 +177,7 @@ export default function RecipeList({
                       <button
                         onClick={(e) => handleSaveRecipe(recipe, e)}
                         disabled={savingRecipes.has(recipe.id)}
-                        className="bg-white hover:bg-gray-50 text-gray-700 p-1 md:p-2 rounded-lg shadow-md transition disabled:opacity-50"
+                        className="bg-white/90 hover:bg-white text-stone-600 p-1 md:p-2 rounded-lg shadow-md transition disabled:opacity-50"
                         title="レシピを保存"
                       >
                         <span className="text-base md:text-xl">{savingRecipes.has(recipe.id) ? '⏳' : '💾'}</span>
@@ -185,11 +185,11 @@ export default function RecipeList({
                     </div>
                   </div>
                   <div className="p-2 md:p-4">
-                    <h3 className="font-bold text-gray-800 group-hover:text-orange-600 transition mb-1 md:mb-2 text-xs md:text-base line-clamp-2">
+                    <h3 className="font-bold text-stone-700 group-hover:text-amber-600 transition mb-1 md:mb-2 text-xs md:text-base line-clamp-2">
                       {recipe.translatedTitle || recipe.title}
                     </h3>
                     {recipe.calories && (
-                      <div className="flex items-center gap-2 md:gap-3 text-gray-600 text-xs md:text-sm">
+                      <div className="flex items-center gap-2 md:gap-3 text-stone-500 text-xs md:text-sm">
                         <span>🔥 {recipe.calories}kcal</span>
                         {recipe.time && recipe.time > 0 && <span>⏱️ {recipe.time}分</span>}
                       </div>
@@ -203,9 +203,9 @@ export default function RecipeList({
             {expandedIndex === index && (
               <div className="mt-4">
                 {loadingRecipeId === recipe.id ? (
-                  <div className="text-center py-12 bg-white rounded-2xl shadow-md">
-                    <div className="inline-block w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="mt-4 text-gray-600 font-semibold">レシピの詳細を読み込み中...</p>
+                  <div className="text-center py-12 bg-white/90 backdrop-blur-sm rounded-2xl shadow-md border border-stone-200/50">
+                    <div className="inline-block w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                    <p className="mt-4 text-stone-600 font-semibold">レシピの詳細を読み込み中...</p>
                   </div>
                 ) : processedRecipe ? (
                   <RecipeDetail
