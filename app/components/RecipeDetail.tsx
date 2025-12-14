@@ -1,7 +1,9 @@
+
 import { useState, useCallback } from 'react';
 import Image from 'next/image';
 import type { ProcessedRecipe } from '../types/recipe';
 import { getOrCreateSessionId } from '../lib/session';
+import RecipeAssistant from './RecipeAssistant';
 
 interface RecipeDetailProps {
   recipe: ProcessedRecipe;
@@ -25,7 +27,7 @@ export default function RecipeDetail({ recipe, onBack, hideButtons = false }: Re
    */
   const handleSave = useCallback(async () => {
     if (saving || isSaved) return;
-    
+
     setSaving(true);
 
     try {
@@ -33,7 +35,7 @@ export default function RecipeDetail({ recipe, onBack, hideButtons = false }: Re
 
       // ProcessedRecipeをUnifiedRecipe形式に変換
       const unifiedRecipe = {
-        id: recipe.originalRecipeId || `processed-${Date.now()}`,
+        id: recipe.originalRecipeId || `processed - ${Date.now()} `,
         title: recipe.title,
         image: recipe.image || '/placeholder-recipe.jpg',
         url: recipe.url || '#',
@@ -51,7 +53,7 @@ export default function RecipeDetail({ recipe, onBack, hideButtons = false }: Re
       };
 
       if (session?.access_token) {
-        headers['Authorization'] = `Bearer ${session.access_token}`;
+        headers['Authorization'] = `Bearer ${session.access_token} `;
       }
 
       // レシピ保存APIを呼び出し
@@ -71,7 +73,7 @@ export default function RecipeDetail({ recipe, onBack, hideButtons = false }: Re
       } else {
         const errorData = await response.json().catch(() => ({ error: '不明なエラー' }));
         console.error('Save failed:', errorData);
-        window.alert(`保存に失敗しました: ${errorData.error}`);
+        window.alert(`保存に失敗しました: ${errorData.error} `);
       }
     } catch (error) {
       console.error('Save error:', error);
@@ -85,7 +87,7 @@ export default function RecipeDetail({ recipe, onBack, hideButtons = false }: Re
   if (!isExpanded) {
     return (
       <div className="max-w-5xl mx-auto px-2 sm:px-4 md:px-8 pb-4">
-        <div 
+        <div
           onClick={() => setIsExpanded(true)}
           className="cursor-pointer bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition"
         >
@@ -107,18 +109,31 @@ export default function RecipeDetail({ recipe, onBack, hideButtons = false }: Re
     );
   }
 
+  // Assistant用のUnifiedRecipeオブジェクトを作成
+  const unifiedRecipeForAssistant: any = {
+    id: recipe.originalRecipeId || 'processed-recipe',
+    title: recipe.title,
+    image: recipe.image || '',
+    url: recipe.url || '',
+    source: (recipe.source as any) || 'unknown',
+    ingredients: recipe.ingredients?.map(i => `${i.name} ${i.amount}`),
+    steps: recipe.steps, // Assistant側でstepsを扱えるようにする修正が必要かも
+    calories: recipe.totalCalories,
+    time: recipe.totalTime
+  };
+
   return (
     <div className="max-w-5xl mx-auto px-2 sm:px-4 md:px-8 pb-16">
+      <RecipeAssistant recipe={unifiedRecipeForAssistant} />
       {!hideButtons && (
         <div className="flex justify-end items-center mb-6">
           <button
             onClick={handleSave}
             disabled={saving || isSaved}
-            className={`px-4 py-2 rounded-lg font-medium transition text-sm ${
-              isSaved
-                ? 'bg-green-500 text-white cursor-default'
-                : 'bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50 disabled:cursor-not-allowed'
-            }`}
+            className={`px - 4 py - 2 rounded - lg font - medium transition text - sm ${isSaved
+              ? 'bg-green-500 text-white cursor-default'
+              : 'bg-orange-500 hover:bg-orange-600 text-white disabled:opacity-50 disabled:cursor-not-allowed'
+              } `}
           >
             {isSaved ? '✓ 保存済み' : saving ? '保存中...' : '💾 保存'}
           </button>

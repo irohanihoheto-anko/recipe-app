@@ -1,9 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { generateText } from '../../lib/gemini';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,25 +9,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Text is required' }, { status: 400 });
     }
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a translator. Translate the given recipe name from English to Japanese. Only return the translated text, nothing else.',
-        },
-        {
-          role: 'user',
-          content: text,
-        },
-      ],
-      temperature: 0.3,
-      max_tokens: 100,
-    });
+    const systemPrompt = 'You are a translator. Translate the given recipe name from English to Japanese. Only return the translated text, nothing else.';
+    const translatedText = await generateText(text, systemPrompt);
 
-    const translatedText = completion.choices[0]?.message?.content?.trim() || text;
-
-    return NextResponse.json({ translatedText });
+    return NextResponse.json({ translatedText: translatedText.trim() });
   } catch (error) {
     console.error('Translation error:', error);
     return NextResponse.json(

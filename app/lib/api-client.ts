@@ -15,7 +15,7 @@ export async function searchEdamamRecipes(
 ): Promise<UnifiedRecipe[]> {
   try {
     const params = new URLSearchParams({ q: query });
-    
+
     // フィルターを追加
     if (filters?.diet) params.append('diet', filters.diet);
     if (filters?.health) params.append('health', filters.health);
@@ -33,7 +33,7 @@ export async function searchEdamamRecipes(
     }
 
     const data: EdamamSearchResponse = await response.json();
-    
+
     // APIキーが未設定の場合は空配列を返す
     if (!data.hits || data.hits.length === 0) {
       console.warn('Edamam API returned no results. Check if API credentials are configured.');
@@ -224,7 +224,9 @@ export async function processRecipeWithAI(recipe: UnifiedRecipe): Promise<Proces
     });
 
     if (!response.ok) {
-      throw new Error(`Process API error: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      console.error('Process API Error details:', errorData);
+      throw new Error(`Process API error: ${response.status} ${errorData.details || errorData.message || ''}`);
     }
 
     const processedRecipe: ProcessedRecipe = await response.json();
@@ -239,6 +241,30 @@ export async function processRecipeWithAI(recipe: UnifiedRecipe): Promise<Proces
     };
   } catch (error) {
     console.error('Recipe processing error:', error);
-    return null;
+
+    // エラー時はフォールバック（生の情報をそのまま返す）
+    // AI処理に失敗しても、最低限のレシピ情報は表示できるようにする
+    return {
+      title: recipe.title,
+      totalTime: recipe.time || 15, // デフォルト15分
+      totalCost: 0, // 不明は0
+      totalCalories: recipe.calories || 0,
+      protein: 0,
+      fat: 0,
+      carbs: 0,
+      ingredients: (recipe.ingredients || recipe.recipeMaterial || []).map(name => ({
+        name,
+        amount: '適量',
+        cost: 0,
+        calories: 0
+      })),
+      steps: [
+        { stepNumber: 1, description: `詳しい作り方は公式サイトで確認してください: ${recipe.url}`, timeMinutes: 0 }
+      ],
+      originalRecipeId: recipe.id,
+      image: recipe.image,
+      url: recipe.url,
+      source: recipe.source,
+    };
   }
 }
